@@ -222,9 +222,12 @@ public class OracleSourceTask extends SourceTask {
 
   @Override
   public List<SourceRecord> poll() throws InterruptedException {
+
     //TODO: Create SourceRecord objects that will be sent the kafka cluster. 
+
     String sqlX="";
     try {
+
       ArrayList<SourceRecord> records = new ArrayList<>();
       if (!oraDeSupportCM){
         while(!this.closed && logMinerData.next()){
@@ -252,13 +255,17 @@ public class OracleSourceTask extends SourceTask {
           String segName = logMinerData.getString(TABLE_NAME_FIELD);
           String sqlRedo = logMinerData.getString(SQL_REDO_FIELD);
           String operation = logMinerData.getString(OPERATION_FIELD);
+
+          //暂未处理DDL(数据模型)变更
           if (sqlRedo.contains(TEMPORARY_TABLE)) continue;
           if (operation.equals(OPERATION_DDL) && (logMinerData.getString("INFO").startsWith("INTERNAL DDL"))) continue;
+
           while(contSF){
             logMinerData.next();
             sqlRedo +=  logMinerData.getString(SQL_REDO_FIELD);
             contSF = logMinerData.getBoolean(CSF_FIELD);
-          } 
+          }
+
           sqlX=sqlRedo;        
           Timestamp timeStamp=logMinerData.getTimestamp(TIMESTAMP_FIELD);
 
@@ -287,11 +294,14 @@ public class OracleSourceTask extends SourceTask {
         
         records.add(sourceRecordMq.take());
         return records;
-      }      
+      }
+
       log.info("Logminer stoppped successfully");       
-    } catch (SQLException e){
+    } 
+    catch (SQLException e){
       log.error("SQL error during poll",e );
-    }catch(JSQLParserException e){
+    }
+    catch(JSQLParserException e){
       log.error("SQL parser error during poll ", e);
     }
     catch(Exception e){
@@ -320,7 +330,7 @@ public class OracleSourceTask extends SourceTask {
 
   }
 
-  private Struct setValueV2(Data row,DataSchemaStruct dataSchemaStruct) {    
+  private Struct setValueV2(Data row, DataSchemaStruct dataSchemaStruct) {    
     Struct valueStruct = new Struct(dataSchemaStruct.getDmlRowSchema())
               .put(SCN_FIELD, row.getScn())
               .put(SEG_OWNER_FIELD, row.getSegOwner())
