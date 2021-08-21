@@ -115,7 +115,7 @@ public class OracleSinkTask  extends SinkTask {
 		  recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset()
 	  );
 
-	  System.out.println(String.format("Received %s records. First record kafka coordinates:(%s-%s-%s). Writing them to the database...", recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset() ));
+	  System.out.println(String.format("收到 %s 条记录. kafka协调器:(%s-%s-%s). 写入归档数据库...", recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset() ));
       
 
 	//   try {
