@@ -8,17 +8,31 @@
     <packaging>jar</packaging>
 
     <name>kafka-connect-oracle</name>
-
     <properties>
         <kafka.version>0.10.2.0-cp1</kafka.version>
         <junit.version>4.13.1</junit.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
+
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>connect</artifactId>
+            <version>2.6.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>connect-runtime</artifactId>
+            <version>2.6</version>
+            <scope>system</scope>
+            <systemPath>F:\software\oracle\kafka\libs\connect-runtime-2.6.0.jar</systemPath>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>connect-api</artifactId>
-            <version>${kafka.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -54,8 +68,9 @@
                 <version>2.5.1</version>
                 <inherited>true</inherited>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <encoding>utf8</encoding>
                 </configuration>
             </plugin>
             <plugin>
@@ -97,4 +112,15 @@
         </repository>
     </repositories>
 
+
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>connect-api</artifactId>
+                <version>2.6.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>
