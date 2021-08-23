@@ -96,6 +96,8 @@ public class OracleSinkTask  extends SinkTask {
 			  }
 
 		  } catch (SQLException  e) {
+			    //java.sql.SQLSyntaxErrorException: ORA-00933: SQL 命令未正确结束
+				//java.sql.SQLSyntaxErrorException: ORA-00955: 名称已由现有对象使用
 			try {
 				dbConn.rollback();
 			} catch (SQLException sqle) {

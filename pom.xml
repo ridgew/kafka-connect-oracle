@@ -9,7 +9,7 @@
 
     <name>kafka-connect-oracle</name>
     <properties>
-        <kafka.version>0.10.2.0-cp1</kafka.version>
+        <kafka.version>2.13-2.6.0</kafka.version>
         <junit.version>4.13.1</junit.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -35,12 +35,20 @@
             <artifactId>connect-api</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.30</version>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>com.github.jsqlparser</groupId>
             <artifactId>jsqlparser</artifactId>

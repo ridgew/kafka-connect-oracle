@@ -64,6 +64,9 @@ public class ConnectStandalone {
             Exit.exit(1);
         }
 
+        // org.apache.log4j.LogManager.resetConfiguration();
+        // org.apache.log4j.PropertyConfigurator.configure("c:/yourlog4j.properties");
+
         try {
             Time time = Time.SYSTEM;
             log.info("Kafka Connect standalone worker initializing ...");

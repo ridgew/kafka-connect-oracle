@@ -255,13 +255,23 @@ public class OracleSourceTask extends SourceTask {
           String segName = logMinerData.getString(TABLE_NAME_FIELD);
           String sqlRedo = logMinerData.getString(SQL_REDO_FIELD);
           String operation = logMinerData.getString(OPERATION_FIELD);
+          String logMinerInfo = logMinerData.getString("INFO");
+
+          System.out.println(String.format("采集到表[%s].[%s]的[%s]操作, %s.", segOwner, segName, operation, logMinerInfo ));
+          System.out.println(sqlRedo);
 
           //暂未处理DDL(数据模型)变更
-          if (sqlRedo.contains(TEMPORARY_TABLE)) 
-                continue;
+          if (sqlRedo.contains(TEMPORARY_TABLE)) {
+             System.out.println("跳过临时表:" + sqlRedo);
+             continue;
+          }
+                
 
-          if (operation.equals(OPERATION_DDL) && (logMinerData.getString("INFO").startsWith("INTERNAL DDL")))
-              continue;
+          if (operation.equals(OPERATION_DDL) && (logMinerInfo.startsWith("INTERNAL DDL"))){
+             System.out.println("INTERNAL DDL:" + logMinerInfo + "\n" + sqlRedo);
+             continue;
+          }
+              
 
           while(contSF){
             logMinerData.next();
