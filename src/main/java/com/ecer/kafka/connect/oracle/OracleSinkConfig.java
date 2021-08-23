@@ -10,6 +10,20 @@ import java.util.Map;
 
 public class OracleSinkConfig extends AbstractConfig {
 
+  public enum InsertMode {
+    INSERT,
+    UPSERT,
+    UPDATE;
+
+  }
+
+  public enum PrimaryKeyMode {
+    NONE,
+    KAFKA,
+    RECORD_KEY,
+    RECORD_VALUE;
+  }
+
   public static final String DB_NAME_ALIAS = "db.name.alias";
   public static final String TOPIC_CONFIG = "topic";
   public static final String DB_NAME_CONFIG = "db.name";
@@ -17,19 +31,42 @@ public class OracleSinkConfig extends AbstractConfig {
   public static final String DB_PORT_CONFIG = "db.port";
   public static final String DB_USER_CONFIG = "db.user";
   public static final String DB_USER_PASSWORD_CONFIG = "db.user.password";
-  public static final String TABLE_WHITELIST = "table.whitelist";
-  public static final String PARSE_DML_DATA = "parse.dml.data";
-  public static final String DB_FETCH_SIZE = "db.fetch.size";
-  public static final String RESET_OFFSET = "reset.offset";
-  public static final String START_SCN = "start.scn";
-  public static final String MULTITENANT = "multitenant";
-  public static final String TABLE_BLACKLIST = "table.blacklist";
-  public static final String DML_TYPES = "dml.types";
-  public static final String MAP_UNESCAPED_STRINGS = "map.unescaped.strings";
 
-  
+  public static final String BATCH_SIZE = "batch.size";
+  private static final int BATCH_SIZE_DEFAULT = 3000;
+  private static final String BATCH_SIZE_DOC =
+      "Specifies how many records to attempt to batch together for insertion into the destination"
+      + " table, when possible.";
+
+  public static final String DELETE_ENABLED = "delete.enabled";
+  private static final String DELETE_ENABLED_DOC =
+      "Whether to treat ``null`` record values as deletes. Requires ``pk.mode`` "
+      + "to be ``record_key``.";
+
+  public static final String INSERT_MODE = "insert.mode";
+  private static final String INSERT_MODE_DEFAULT = "insert";
+  private static final String INSERT_MODE_DOC =
+          "The insertion mode to use. Supported modes are:\n"
+          + "``insert``\n"
+          + "    Use standard SQL ``INSERT`` statements.\n"
+          + "``upsert``\n"
+          + "    Use the appropriate upsert semantics for the target database if it is supported by "
+          + "the connector, e.g. ``INSERT OR IGNORE``.\n"
+          + "``update``\n"
+          + "    Use the appropriate update semantics for the target database if it is supported by "
+          + "the connector, e.g. ``UPDATE``.";
+
+  public final boolean deleteEnabled;
+  public final int batchSize;
+  public final InsertMode insertMode;
+
   public OracleSinkConfig(ConfigDef config, Map<String, String> parsedConfig) {
     super(config, parsedConfig);
+
+    deleteEnabled = getBoolean(DELETE_ENABLED);
+    batchSize = getInt(BATCH_SIZE);
+    insertMode = InsertMode.valueOf(getString(INSERT_MODE).toUpperCase());
+
   }
 
   public OracleSinkConfig(Map<String, String> parsedConfig) {
@@ -45,15 +82,10 @@ public class OracleSinkConfig extends AbstractConfig {
         .define(DB_PORT_CONFIG,Type.INT,Importance.HIGH,"Db Port")
         .define(DB_USER_CONFIG,Type.STRING,Importance.HIGH,"Db User")
         .define(DB_USER_PASSWORD_CONFIG,Type.STRING,Importance.HIGH,"Db User Password")
-        .define(TABLE_WHITELIST,Type.STRING,Importance.HIGH,"TAbles will be mined")
-        .define(PARSE_DML_DATA,Type.BOOLEAN,Importance.HIGH,"Parse DML Data")
-        .define(DB_FETCH_SIZE,Type.INT,Importance.HIGH,"Database Record Fetch Size")
-        .define(RESET_OFFSET,Type.BOOLEAN,Importance.HIGH,"Reset Offset")
-        .define(START_SCN,Type.STRING,"",Importance.LOW,"Start SCN")
-        .define(MULTITENANT, Type.BOOLEAN, Importance.HIGH, "Database is multitenant (container)")
-        .define(TABLE_BLACKLIST, Type.STRING, Importance.LOW, "Table will not be mined")
-        .define(DML_TYPES, Type.STRING, "", Importance.LOW, "Types of DML to capture, CSV value of INSERT/UPDATE/DELETE")
-        .define(MAP_UNESCAPED_STRINGS, Type.BOOLEAN, false, Importance.LOW, "Mapped values for data/before will have unescaped strings");
+        .define(DELETE_ENABLED, Type.BOOLEAN, Importance.HIGH, DELETE_ENABLED_DOC)
+        .define(BATCH_SIZE, Type.INT, Importance.MEDIUM, BATCH_SIZE_DOC)
+        .define(INSERT_MODE, Type.STRING,INSERT_MODE_DEFAULT, Importance.MEDIUM, INSERT_MODE_DOC)
+        ;
   }
 
   public String getDbNameAlias(){ return this.getString(DB_NAME_ALIAS);}
@@ -63,13 +95,5 @@ public class OracleSinkConfig extends AbstractConfig {
   public int getDbPort(){return this.getInt(DB_PORT_CONFIG);}
   public String getDbUser(){return this.getString(DB_USER_CONFIG);}
   public String getDbUserPassword(){return this.getString(DB_USER_PASSWORD_CONFIG);}
-  public String getTableWhiteList(){return this.getString(TABLE_WHITELIST);}
-  public Boolean getParseDmlData(){return this.getBoolean(PARSE_DML_DATA);}
-  public int getDbFetchSize(){return this.getInt(DB_FETCH_SIZE);}
-  public Boolean getResetOffset(){return this.getBoolean(RESET_OFFSET);}
-  public String getStartScn(){return this.getString(START_SCN);}
-  public Boolean getMultitenant() {return this.getBoolean(MULTITENANT);}
-  public String getTableBlackList(){return this.getString(TABLE_BLACKLIST);}
-  public String getDMLTypes(){return this.getString(DML_TYPES);}
-  public Boolean getMapUnescapedStrings(){return this.getBoolean(MAP_UNESCAPED_STRINGS);}
+
 }

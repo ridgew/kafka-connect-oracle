@@ -257,8 +257,11 @@ public class OracleSourceTask extends SourceTask {
           String operation = logMinerData.getString(OPERATION_FIELD);
 
           //暂未处理DDL(数据模型)变更
-          if (sqlRedo.contains(TEMPORARY_TABLE)) continue;
-          if (operation.equals(OPERATION_DDL) && (logMinerData.getString("INFO").startsWith("INTERNAL DDL"))) continue;
+          if (sqlRedo.contains(TEMPORARY_TABLE)) 
+                continue;
+
+          if (operation.equals(OPERATION_DDL) && (logMinerData.getString("INFO").startsWith("INTERNAL DDL")))
+              continue;
 
           while(contSF){
             logMinerData.next();

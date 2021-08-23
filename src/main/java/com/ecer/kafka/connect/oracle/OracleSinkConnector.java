@@ -12,6 +12,9 @@ import org.apache.kafka.connect.sink.SinkConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ecer.kafka.connect.oracle.OracleSinkConfig;
+import com.ecer.kafka.connect.oracle.VersionUtil;
+
 //kafka之七 sinkTask
 //https://blog.csdn.net/lisi1129/article/details/54744189
 
