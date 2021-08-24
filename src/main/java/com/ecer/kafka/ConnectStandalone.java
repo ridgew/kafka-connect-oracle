@@ -35,6 +35,7 @@ import org.apache.kafka.connect.storage.FileOffsetBackingStore;
 import org.apache.kafka.connect.util.Callback;
 import org.apache.kafka.connect.util.ConnectUtils;
 import org.apache.kafka.connect.util.FutureCallback;
+import org.apache.log4j.PropertyConfigurator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,8 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * <p>
@@ -58,6 +61,17 @@ public class ConnectStandalone {
     private static final Logger log = LoggerFactory.getLogger(ConnectStandalone.class);
 
     public static void main(String[] args) {
+
+        System.setProperty("kafka.logs.dir", "./logs/");
+        File f = new File("./config/log4j.properties");
+        String cf = null;
+        try {
+            cf = f.getCanonicalPath();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //System.out.println(cf);
+        PropertyConfigurator.configure(cf);
 
         if (args.length < 2 || Arrays.asList(args).contains("--help")) {
             log.info("Usage: ConnectStandalone worker.properties connector1.properties [connector2.properties ...]");

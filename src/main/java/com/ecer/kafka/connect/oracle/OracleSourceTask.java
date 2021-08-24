@@ -262,13 +262,13 @@ public class OracleSourceTask extends SourceTask {
 
           //暂未处理DDL(数据模型)变更
           if (sqlRedo.contains(TEMPORARY_TABLE)) {
-             System.out.println("跳过临时表:" + sqlRedo);
+             log.info("跳过临时表:" + sqlRedo);
              continue;
           }
                 
 
           if (operation.equals(OPERATION_DDL) && (logMinerInfo.startsWith("INTERNAL DDL"))){
-             System.out.println("INTERNAL DDL:" + logMinerInfo + "\n" + sqlRedo);
+             log.info("INTERNAL DDL:" + logMinerInfo + "\n" + sqlRedo);
              continue;
           }
               
