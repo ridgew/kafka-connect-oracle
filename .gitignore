@@ -3,7 +3,6 @@
 /.project
 /mvn
 /.classpath
-/src/test
 /*.log
 /logs
 /*.iml

@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Launch SqlParseTest",
+            "request": "launch",
+            "mainClass": "com.ecer.kafka.connect.oracle.test.SqlParseTest",
+            "projectName": "kafka-connect-oracle"
+        },
+        {
+            "type": "java",
             "name": "Launch Current File",
             "request": "launch",
             "mainClass": "${file}"
@@ -18,7 +25,6 @@
             "mainClass": "com.ecer.kafka.ConnectStandalone",
             "classPaths": [
                 "F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/target/classes",
-
                 "F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/libs/activation-1.1.1.jar",
                 "F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/libs/aopalliance-repackaged-2.5.0.jar",
                 "F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/libs/argparse4j-0.7.0.jar",
@@ -116,7 +122,6 @@
                 "F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/libs/zookeeper-3.5.8.jar",
                 "F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/libs/zookeeper-jute-3.5.8.jar",
                 "F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/libs/zstd-jni-1.4.4-7.jar",
-
                 "F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/libs/jsqlparser-1.2.jar"
             ],
             "projectName": "kafka-connect-oracle",
