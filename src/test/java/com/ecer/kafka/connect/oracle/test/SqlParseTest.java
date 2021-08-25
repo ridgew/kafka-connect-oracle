@@ -17,11 +17,15 @@
 package com.ecer.kafka.connect.oracle.test;
 
 import java.io.File;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.Test;
+
+import static java.util.Objects.isNull;
 
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
@@ -48,14 +52,45 @@ public class SqlParseTest {
         }
     }
 
+    /**
+     * 看word是否在lineText中存在，支持正则表达式
+     * 
+     * @param lineText
+     * @param word
+     * @return 是否找到
+     */
+    private static boolean isContains(String lineText, String word) {
+        Pattern pattern = Pattern.compile(word, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(lineText);
+        return matcher.find();
+    }
+
+    /**
+     * 
+     * @param regex
+     * @param text
+     * @param group
+     * @return
+     */
+    private static String getMatchedString(String regex, String text, int group) {
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(text);
+        while (matcher.find()) {
+            return matcher.group(group);
+        }
+        return null;
+    }
+
     @Test
-    public void testOneParent() throws  JSQLParserException {
-        String errorSql = "drop table T5\n"
-         + "AS \"BIN$yjgthaaz/ejgUBGsAwBtTw==$0\"";
+    public void testOneParent() throws JSQLParserException {
+        String errorSql = "drop table T5\n" + "AS \"BIN$yjgthaaz/ejgUBGsAwBtTw==$0\"";
+        String dropFix = getMatchedString("drop table ([\\w]+)([\\w\\W]+)AS\\s\"([^\"]+)\"", errorSql, 1);
+        if (!isNull(dropFix))
+            System.out.println(dropFix);
+
         String okDrop = "drop table T5";
         Statement stmt = CCJSqlParserUtil.parse(okDrop);
-        Drop drop = (Drop)stmt;
-
+        Drop drop = (Drop) stmt;
         System.out.println(drop.getName().getName());
 
     }

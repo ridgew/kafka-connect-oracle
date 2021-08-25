@@ -20,12 +20,13 @@ import org.apache.kafka.connect.sink.SinkTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ecer.kafka.connect.oracle.errorHandler.*;
+
 import static com.ecer.kafka.connect.oracle.OracleConnectorSchema.SQL_REDO_FIELD;
 //
 //https://github.com/confluentinc/kafka-connect-jdbc/blob/master/src/main/java/io/confluent/connect/jdbc/sink/JdbcSinkTask.java
 
-
-public class OracleSinkTask  extends SinkTask {
+public class OracleSinkTask extends SinkTask {
 
 	private static final Logger log = LoggerFactory.getLogger(OracleSinkTask.class);
 
@@ -36,89 +37,100 @@ public class OracleSinkTask  extends SinkTask {
 		return dbConn;
 	}
 
-	public static void closeDbConn() throws SQLException{
+	public static void closeDbConn() throws SQLException {
 		dbConn.close();
-	  }
+	}
 
 	@Override
-    public void start(Map<String, String> map) {
+	public void start(Map<String, String> map) {
 		log.info("Starting JDBC Sink task");
 		config = new OracleSinkConfig(map);
 		try {
 			dbConn = new OracleConnection().connectSink(config);
-			dbConn.setAutoCommit(false); //不启用自动提交事务
+			dbConn.setAutoCommit(false); // 不启用自动提交事务
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-    }
+	}
 
 	@Override
 	public void stop() {
 		log.info("Stopping task");
-		try {            
-			if (dbConn!=null){              
-			  dbConn.close();
+		try {
+			if (dbConn != null) {
+				dbConn.close();
 			}
-		  } catch (SQLException e) {log.error(e.getMessage());}
+		} catch (SQLException e) {
+			log.error(e.getMessage());
+		}
 	}
-
 
 	@Override
 	public void put(Collection<SinkRecord> records) {
-	  if (records.isEmpty()) {
-		return;
-	  }
+		if (records.isEmpty()) {
+			return;
+		}
 
-	  final SinkRecord first = records.iterator().next();
-	  final int recordsCount = records.size();
-	  SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//设置日期格式
-	  log.info(String.format("[%s]收到 %s 条记录. kafka协调器:(%s-%s-%s). 写入归档数据库...", df.format(new Date()), recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset() ));
+		final SinkRecord first = records.iterator().next();
+		final int recordsCount = records.size();
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");// 设置日期格式
+		log.info(String.format("[%s]收到 %s 条记录. kafka协调器:(%s-%s-%s). 写入归档数据库...", df.format(new Date()), recordsCount,
+				first.topic(), first.kafkaPartition(), first.kafkaOffset()));
 
 		try {
 
 			for (SinkRecord record : records) {
 
-			    String topic = record.topic();
+				String topic = record.topic();
 				final Struct valueStruct = (Struct) record.value();
 				final boolean isDelete = isNull(valueStruct);
 				final Field field = record.valueSchema().field(SQL_REDO_FIELD);
 				Schema fieldSchema = field.schema();
 				String sql = valueStruct.get(field).toString();
-				log.info(String.format("(%s-%s-%s)...", topic, record.kafkaPartition(), record.kafkaOffset() ));
+				log.info(String.format("(%s-%s-%s)...", topic, record.kafkaPartition(), record.kafkaOffset()));
 				log.info(sql);
 
-				OracleSqlUtils.executeCallableStmt(dbConn, sql);  
+				try {
+					OracleSqlUtils.executeCallableStmt(dbConn, sql);
+				} catch (SQLException e) {
+					// java.sql.SQLSyntaxErrorException: ORA-00933: SQL 命令未正确结束
+					// java.sql.SQLSyntaxErrorException: ORA-00955: 名称已由现有对象使用
+					log.error(e.toString());
 
+					DataHandler handler = SqlErrorHandlerFactory.FindHandlerBySql(sql);
+					if (!isNull(handler)) {
+						handler.HandlerSql(dbConn, sql);
+					} else {
+						try {
+							dbConn.rollback();
+						} catch (SQLException sqle) {
+							e.addSuppressed(sqle);
+						} finally {
+							// throw e;
+							e.printStackTrace();
+						}
+					}
+
+				}
 			}
 
-			if (dbConn!=null){              
+			if (dbConn != null) {
 				dbConn.commit();
-			  }
-
-		  } catch (SQLException  e) {
-			    //java.sql.SQLSyntaxErrorException: ORA-00933: SQL 命令未正确结束
-				//java.sql.SQLSyntaxErrorException: ORA-00955: 名称已由现有对象使用
-			    log.error(e.toString());
-			try {
-				dbConn.rollback();
-			} catch (SQLException sqle) {
-			  e.addSuppressed(sqle);
-			} finally {
-			  //throw e;
-			  e.printStackTrace();
 			}
-		  }
-		  catch(Exception syse)
-		  {
-			 log.error(syse.toString());
-			 syse.printStackTrace();
-		  }
+		} catch (Exception syse) {
+			log.error(syse.toString());
+			syse.printStackTrace();
+		}
 
+	}
+
+	private boolean isFixableSql(String sql) {
+		return false;
 	}
 
 	@Override
 	public String version() {
-		return  VersionUtil.getVersion();
+		return VersionUtil.getVersion();
 	}
-   
+
 }
