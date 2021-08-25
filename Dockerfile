@@ -1,4 +1,5 @@
-FROM openjdk:8-alpine
+FROM primetoninc/jdk:1.8
+ENV kafka.logs.dir /home/java-app/logs 
 
 ARG NAME
 ARG VERSION
@@ -12,34 +13,29 @@ ENV TZ=Asia/Shanghai
 RUN set -eux; \
     ln -snf /usr/share/zoneinfo/$TZ /etc/localtime; \
     echo $TZ > /etc/timezone
-
-# 新建用户java-app
-RUN set -eux; \
-    addgroup --gid 1000 java-app; \
-    adduser -S -u 1000 -g java-app -h /home/java-app/ -s /bin/sh -D java-app; \
-    mkdir -p /home/java-app/libs /home/java-app/etc /home/java-app/jmx-ssl /home/java-app/logs /home/java-app/tmp /home/java-app/jmx-exporter/libs /home/java-app/jmx-exporter/etc; \
-    chown -R java-app:java-app /home/java-app
-
+	
+# 新建目录
+RUN mkdir -p /home/java-app/logs 
+	
 # 复制Kafka
-COPY --chown=java-app:java-app bin /home/java-app/bin
+COPY bin /home/java-app/bin
 
 # 复制libs
-COPY --chown=java-app:java-app libs /home/java-app/libs
+COPY libs /home/java-app/libs
 
 # 复制配置文件
-COPY --chown=java-app:java-app config /home/java-app/config
+COPY config /home/java-app/config
 
 # 导入启动脚本
-COPY --chown=java-app:java-app docker-entrypoint.sh /home/java-app/docker-entrypoint.sh
+COPY docker-entrypoint.sh /home/java-app/docker-entrypoint.sh
 
 # 导入JAR
-COPY --chown=java-app:java-app target/${JAR_FILE} /home/java-app/libs/app.jar
+COPY target/${JAR_FILE} /home/java-app/libs/app.jar
 
-USER java-app
+# 设置工作目录
+WORKDIR /home/java-app/bin
 
-
-#ENTRYPOINT ["/bin/sh"]
-ENTRYPOINT ["java","-jar","/home/java-app/libs/app.jar"]
-#ENTRYPOINT ["/home/java-app/docker-entrypoint.sh"]
+#ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["java","-Djava.ext.dirs=../libs/","com.ecer.kafka.ConnectStandalone","../config/connect-standalone.properties","../config/OracleSourceConnector.properties","../config/OracleConnector-sink.properties"]
 
 EXPOSE 8083

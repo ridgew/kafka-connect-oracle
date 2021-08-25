@@ -95,11 +95,17 @@ public class OracleSinkTask extends SinkTask {
 				} catch (SQLException e) {
 					// java.sql.SQLSyntaxErrorException: ORA-00933: SQL 命令未正确结束
 					// java.sql.SQLSyntaxErrorException: ORA-00955: 名称已由现有对象使用
-					log.error(e.toString());
+					log.error("原始执行错误：" + e.toString());
 
 					DataHandler handler = SqlErrorHandlerFactory.FindHandlerBySql(sql);
 					if (!isNull(handler)) {
-						handler.HandlerSql(dbConn, sql);
+
+						try {
+							handler.HandlerSql(dbConn, sql);
+						} catch (Exception eFix) {
+							log.error("执行修复操作异常：" + eFix.getMessage());
+						}
+
 					} else {
 						try {
 							dbConn.rollback();
@@ -118,7 +124,7 @@ public class OracleSinkTask extends SinkTask {
 				dbConn.commit();
 			}
 		} catch (Exception syse) {
-			log.error(syse.toString());
+			log.error("put异常：" + syse.toString());
 			syse.printStackTrace();
 		}
 

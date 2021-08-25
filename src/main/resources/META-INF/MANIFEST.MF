@@ -1,4 +1,5 @@
 Manifest-Version: 1.0
-Archiver-Version: Plexus Archiver
-Created-By: 25.301-b09 (Oracle Corporation)
+Built-By: wangqj
 Main-Class: com.ecer.kafka.ConnectStandalone
+Created-By: Apache Maven 3.6.1
+Build-Jdk: 1.8.0_301

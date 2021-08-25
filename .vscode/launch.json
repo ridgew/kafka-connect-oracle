@@ -21,7 +21,7 @@
             "type": "java",
             "name": "Launch ConnectStandalone",
             "request": "launch",
-            "stopOnEntry": false,
+            "stopOnEntry": true,
             "mainClass": "com.ecer.kafka.ConnectStandalone",
             "classPaths": [
                 "F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/target/classes",

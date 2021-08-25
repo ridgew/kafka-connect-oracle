@@ -62,8 +62,8 @@ public class ConnectStandalone {
 
     public static void main(String[] args) {
 
-        System.setProperty("kafka.logs.dir", "./logs/");
-        File f = new File("./config/log4j.properties");
+        //System.setProperty("kafka.logs.dir", "../logs/");
+        File f = new File("../config/log4j.properties");
         String cf = null;
         try {
             cf = f.getCanonicalPath();

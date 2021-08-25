@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os, re, sys
 from os.path import join
 from zipfile import ZipFile

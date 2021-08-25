@@ -1,18 +1,20 @@
 package com.ecer.kafka.connect.oracle.errorHandler;
 
 import java.util.regex.Matcher;
-
 import static java.util.Objects.isNull;
+import java.sql.Connection;
+import java.sql.SQLException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.ecer.kafka.connect.oracle.OracleSqlUtils;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 /**
- * 删除表错误处理 
- */ 
+ * 删除表错误处理
+ */
 public class DropTableErrorHandler extends RegexDataHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(DropTableErrorHandler.class);
 
     public DropTableErrorHandler(final String regex, final Object exceptionHandler) {
         super(regex);
@@ -31,7 +33,6 @@ public class DropTableErrorHandler extends RegexDataHandler {
 
     @Override
     public void HandlerSql(Connection dbconn, String sql) {
-        // TODO Auto-generated method stub
         Matcher matcher = getPattern().matcher(sql);
         String table = null;
         while (matcher.find()) {
@@ -40,11 +41,11 @@ public class DropTableErrorHandler extends RegexDataHandler {
 
         try {
             if (!isNull(table))
-                OracleSqlUtils.executeCallableStmt(dbconn, "drop table " + table);
-
+                OracleSqlUtils.executeCallableStmt(dbconn, "DROP TABLE " + table + " ;");
+                log.info("表删除操作已修复:" + table);
         } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            //e.printStackTrace();
+            log.error(e.getMessage());
         }
     }
 
