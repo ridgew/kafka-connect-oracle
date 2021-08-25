@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Archiver-Version: Plexus Archiver
+Created-By: 25.301-b09 (Oracle Corporation)
+Main-Class: com.ecer.kafka.ConnectStandalone
