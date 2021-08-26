@@ -2,6 +2,11 @@ package com.ecer.kafka.connect.oracle.errorHandler;
 
 public final class SqlErrorHandlerFactory {
 
+    /**
+     * 
+     * @param sql
+     * @return
+     */
     public static DataHandler FindHandlerBySql(String sql) {
 
         //Drop表错误

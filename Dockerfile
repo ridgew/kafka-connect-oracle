@@ -1,5 +1,5 @@
-FROM primetoninc/jdk:1.8
-ENV kafka.logs.dir /home/java-app/logs 
+#FROM primetoninc/jdk:1.8
+FROM mes.com/library/jdk:1.8
 
 ARG NAME
 ARG VERSION
@@ -15,7 +15,7 @@ RUN set -eux; \
     echo $TZ > /etc/timezone
 	
 # 新建目录
-RUN mkdir -p /home/java-app/logs 
+RUN mkdir -p /home/java-app/logs /home/java-app/sync
 	
 # 复制Kafka
 COPY bin /home/java-app/bin
@@ -36,6 +36,7 @@ COPY target/${JAR_FILE} /home/java-app/libs/app.jar
 WORKDIR /home/java-app/bin
 
 #ENTRYPOINT ["/bin/bash"]
-ENTRYPOINT ["java","-Djava.ext.dirs=../libs/","com.ecer.kafka.ConnectStandalone","../config/connect-standalone.properties","../config/OracleSourceConnector.properties","../config/OracleConnector-sink.properties"]
+# java.ext.dirs指定的目录由ExtClassLoader加载器加载
+ENTRYPOINT ["java","-Djava.ext.dirs=../libs/:$JAVA_HOME/jre/lib/ext","com.ecer.kafka.ConnectStandalone","../config/connect-oracle.properties","../config/OracleSourceConnector.properties","../config/OracleConnector-sink.properties"]
 
 EXPOSE 8083

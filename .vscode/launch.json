@@ -125,7 +125,7 @@
                 "F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/libs/jsqlparser-1.2.jar"
             ],
             "projectName": "kafka-connect-oracle",
-            "args": "F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/config/connect-standalone.properties F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/config/OracleSourceConnector.properties  F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/config/OracleConnector-sink.properties"
+            "args": "F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/config/connect-oracle.properties F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/config/OracleSourceConnector.properties  F:/software/oracle/dev/sync2kafka/kafka-connect-oracle/config/OracleConnector-sink.properties"
         }
     ]
 }

@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -48,13 +49,15 @@ import java.io.IOException;
 
 /**
  * <p>
- * Command line utility that runs Kafka Connect as a standalone process. In this mode, work is not
- * distributed. Instead, all the normal Connect machinery works within a single process. This is
- * useful for ad hoc, small, or experimental jobs.
+ * Command line utility that runs Kafka Connect as a standalone process. In this
+ * mode, work is not distributed. Instead, all the normal Connect machinery
+ * works within a single process. This is useful for ad hoc, small, or
+ * experimental jobs.
  * </p>
  * <p>
- * By default, no job configs or offset data is persistent. You can make jobs persistent and
- * fault tolerant by overriding the settings to use file storage for both.
+ * By default, no job configs or offset data is persistent. You can make jobs
+ * persistent and fault tolerant by overriding the settings to use file storage
+ * for both.
  * </p>
  */
 public class ConnectStandalone {
@@ -62,24 +65,44 @@ public class ConnectStandalone {
 
     public static void main(String[] args) {
 
-        //System.setProperty("kafka.logs.dir", "../logs/");
-        File f = new File("../config/log4j.properties");
+        // System.out.println(System.getProperty("java.ext.dirs")); //null
+        // System.out.println(System.getProperty("java.class.path"));
+
+        // http://stackoverflow.com/questions/482560/can-you-tell-on-runtime-if-youre-running-java-from-within-a-jar
+        URL startupResource = ConnectStandalone.class.getResource("ConnectStandalone.class");
+        System.out.println("App启动类:" + startupResource.getPath());
+
+        String log4jCfgPath = "./config/log4j.properties";
+        if (startupResource.getPath().startsWith("jar:") || startupResource.getPath().contains(".jar!/") )
+            log4jCfgPath = "." + log4jCfgPath;
+
+        // System.setProperty("kafka.logs.dir", "../logs/");
+
+        File f = new File(log4jCfgPath);
         String cf = null;
         try {
             cf = f.getCanonicalPath();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        //System.out.println(cf);
-        PropertyConfigurator.configure(cf);
+
+        if (!f.exists()) {
+            System.out.println("找不到文件:" + cf);
+            if (cf.contains("/bin/config/")) {
+                cf = cf.replace(("/bin/config/"), "/config/");
+                System.out.println("log4j.properties路径调整为" + cf);
+            }
+        }
+
+        if (new File(cf).exists()) {
+            org.apache.log4j.LogManager.resetConfiguration();
+            PropertyConfigurator.configure(cf);
+        }
 
         if (args.length < 2 || Arrays.asList(args).contains("--help")) {
             log.info("Usage: ConnectStandalone worker.properties connector1.properties [connector2.properties ...]");
             Exit.exit(1);
         }
-
-        // org.apache.log4j.LogManager.resetConfiguration();
-        // org.apache.log4j.PropertyConfigurator.configure("c:/yourlog4j.properties");
 
         try {
             Time time = Time.SYSTEM;
@@ -89,8 +112,9 @@ public class ConnectStandalone {
             initInfo.logAll();
 
             String workerPropsFile = args[0];
-            Map<String, String> workerProps = !workerPropsFile.isEmpty() ?
-                    Utils.propsToStringMap(Utils.loadProps(workerPropsFile)) : Collections.<String, String>emptyMap();
+            Map<String, String> workerProps = !workerPropsFile.isEmpty()
+                    ? Utils.propsToStringMap(Utils.loadProps(workerPropsFile))
+                    : Collections.<String, String>emptyMap();
 
             log.info("Scanning for plugin classes. This might take a moment ...");
             Plugins plugins = new Plugins(workerProps);
@@ -107,10 +131,10 @@ public class ConnectStandalone {
             String workerId = advertisedUrl.getHost() + ":" + advertisedUrl.getPort();
 
             ConnectorClientConfigOverridePolicy connectorClientConfigOverridePolicy = plugins.newPlugin(
-                config.getString(WorkerConfig.CONNECTOR_CLIENT_POLICY_CLASS_CONFIG),
-                config, ConnectorClientConfigOverridePolicy.class);
+                    config.getString(WorkerConfig.CONNECTOR_CLIENT_POLICY_CLASS_CONFIG), config,
+                    ConnectorClientConfigOverridePolicy.class);
             Worker worker = new Worker(workerId, time, plugins, config, new FileOffsetBackingStore(),
-                                       connectorClientConfigOverridePolicy);
+                    connectorClientConfigOverridePolicy);
 
             Herder herder = new StandaloneHerder(worker, kafkaClusterId, connectorClientConfigOverridePolicy);
             final Connect connect = new Connect(herder, rest);
@@ -120,18 +144,18 @@ public class ConnectStandalone {
                 connect.start();
                 for (final String connectorPropsFile : Arrays.copyOfRange(args, 1, args.length)) {
                     Map<String, String> connectorProps = Utils.propsToStringMap(Utils.loadProps(connectorPropsFile));
-                    FutureCallback<Herder.Created<ConnectorInfo>> cb = new FutureCallback<>(new Callback<Herder.Created<ConnectorInfo>>() {
-                        @Override
-                        public void onCompletion(Throwable error, Herder.Created<ConnectorInfo> info) {
-                            if (error != null)
-                                log.error("Failed to create job for {}", connectorPropsFile);
-                            else
-                                log.info("Created connector {}", info.result().name());
-                        }
-                    });
-                    herder.putConnectorConfig(
-                            connectorProps.get(ConnectorConfig.NAME_CONFIG),
-                            connectorProps, false, cb);
+                    FutureCallback<Herder.Created<ConnectorInfo>> cb = new FutureCallback<>(
+                            new Callback<Herder.Created<ConnectorInfo>>() {
+                                @Override
+                                public void onCompletion(Throwable error, Herder.Created<ConnectorInfo> info) {
+                                    if (error != null)
+                                        log.error("Failed to create job for {}", connectorPropsFile);
+                                    else
+                                        log.info("Created connector {}", info.result().name());
+                                }
+                            });
+                    herder.putConnectorConfig(connectorProps.get(ConnectorConfig.NAME_CONFIG), connectorProps, false,
+                            cb);
                     cb.get();
                 }
             } catch (Throwable t) {
