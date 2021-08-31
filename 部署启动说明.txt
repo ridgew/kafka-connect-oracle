@@ -1,5 +1,37 @@
 docker-compose up -d
 
+
+Oracle同步数据到kafka
+https://www.cnblogs.com/bicewow/p/13717143.html
+https://kafka.apache.org/documentation.html#connect_rest
+
+--开启归档日志
+sqlplus / as sysdba    
+SQL>shutdown immediate
+SQL>startup mount
+SQL>alter database archivelog;
+SQL>alter database open;
+
+--开启附加日志
+SQL>alter database add supplemental log data (all) columns;
+
+--创建kafka-connect-oracle-master连接用户
+
+create role logmnr_role;
+grant create session to logmnr_role;
+grant execute_catalog_role,select any transaction ,select any dictionary to logmnr_role;
+
+create user kminer identified by kminerpass;
+grant  logmnr_role to kminer;
+alter user kminer quota unlimited on users;
+
+
+docker exec -it oracle_11g /bin/bash
+source /home/oracle/.bash_profile
+select * from dba_sys_privs where GRANTEE='kminer';
+select * from dba_role_privs where GRANTEE='logmnr_role';
+create pfile='/home/oracle/pfile.ora' from spfile;
+
 第一步：启动zookeeper
 docker run -d --name zookeeper --publish 2181:2181 --volume /etc/localtime:/etc/localtime --restart=always mes.com/library/zookeeper:3.4.13
 
@@ -10,4 +42,7 @@ docker run -d --name kafka --publish 9092:9092 --link zookeeper:zookeeper --env 
 docker run -d --name kafka-manager --link zookeeper:zookeeper --link kafka:kafka -p 9001:9000 --restart=always --env ZK_HOSTS=zookeeper:2181 mes.com/library/kafka-manager:1.3.3.22
 
 第四步：运行数据库同步连接器
-docker run -d --name oraclesync -p 8083:8083 -v /opt/oracle/datasync/config:/home/java-app/config -v /opt/oracle/datasync/logs:/home/java-app/logs --restart=always  mes.com/tools/kafka-connect-oracle:1.0.72
+docker run -d --name oraclesync -p 8083:8083 -v /opt/oracle/datasync/config:/home/java-app/config -v /opt/oracle/datasync/sync:/home/java-app/sync -v /opt/oracle/datasync/logs:/home/java-app/logs --restart=always  mes.com/tools/kafka-connect-oracle:1.0.72
+
+
+curl -X POST http://192.168.223.167:8083/connectors/oracle-logminer-connector/tasks/0/restart

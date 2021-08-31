@@ -39,13 +39,14 @@ public class DropTableErrorHandler extends RegexDataHandler {
             table = matcher.group(1);
         }
 
+        String fixSql = "DROP TABLE " + table;
         try {
             if (!isNull(table))
-                OracleSqlUtils.executeCallableStmt(dbconn, "DROP TABLE " + table + " ;");
+                OracleSqlUtils.executeCallableStmt(dbconn, fixSql);
                 log.info("表删除操作已修复:" + table);
         } catch (SQLException e) {
             //e.printStackTrace();
-            log.error(e.getMessage());
+            log.error("修复失败：" + fixSql + "\n" + e.getMessage());
         }
     }
 
