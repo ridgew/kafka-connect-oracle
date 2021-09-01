@@ -18,6 +18,7 @@ services:
       - 8083:8083
     volumes:
       - /opt/oracle/datasync/config:/home/java-app/config
+      - /opt/oracle/datasync/sync:/home/java-app/sync
       - /opt/oracle/datasync/logs:/home/java-app/logs
 
   zookeeper:
@@ -58,4 +59,3 @@ services:
     links:
       - zookeeper:zookeeper
       - kafka:kafka
-

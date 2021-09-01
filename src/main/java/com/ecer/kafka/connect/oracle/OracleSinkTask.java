@@ -71,11 +71,13 @@ public class OracleSinkTask extends SinkTask {
 			return;
 		}
 
-		final SinkRecord first = records.iterator().next();
-		final int recordsCount = records.size();
-		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");// 设置日期格式
-		log.info(String.format("[%s]收到 %s 条记录. kafka协调器:(%s-%s-%s). 写入归档数据库...", df.format(new Date()), recordsCount,
-				first.topic(), first.kafkaPartition(), first.kafkaOffset()));
+		if (log.isInfoEnabled()) {
+			final SinkRecord first = records.iterator().next();
+			final int recordsCount = records.size();
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");// 设置日期格式
+			log.info(String.format("[%s]收到 %s 条记录. kafka协调器:(%s-%s-%s). 写入归档数据库...", df.format(new Date()),
+					recordsCount, first.topic(), first.kafkaPartition(), first.kafkaOffset()));
+		}
 
 		try {
 
@@ -87,8 +89,11 @@ public class OracleSinkTask extends SinkTask {
 				final Field field = record.valueSchema().field(SQL_REDO_FIELD);
 				Schema fieldSchema = field.schema();
 				String sql = valueStruct.get(field).toString();
-				log.info(String.format("(%s-%s-%s)...", topic, record.kafkaPartition(), record.kafkaOffset()));
-				log.info(sql);
+				
+				if (log.isInfoEnabled()) {
+					log.info(String.format("(%s-%s-%s)...", topic, record.kafkaPartition(), record.kafkaOffset()));
+					log.info(sql);
+				}
 
 				try {
 					OracleSqlUtils.executeCallableStmt(dbConn, sql);
@@ -96,6 +101,10 @@ public class OracleSinkTask extends SinkTask {
 					// java.sql.SQLSyntaxErrorException: ORA-00933: SQL 命令未正确结束
 					// java.sql.SQLSyntaxErrorException: ORA-00955: 名称已由现有对象使用
 					log.error("原始执行错误：" + e.toString());
+					log.error("参考信息：------------------------------");
+					log.error(String.format("KafKa: (%s-%s-%s)", topic, record.kafkaPartition(), record.kafkaOffset()));
+					log.error(sql);
+					log.error("------------------------------ 参考信息");
 
 					DataHandler handler = SqlErrorHandlerFactory.FindHandlerBySql(sql);
 					if (!isNull(handler)) {
@@ -107,6 +116,7 @@ public class OracleSinkTask extends SinkTask {
 						}
 
 					} else {
+
 						try {
 							dbConn.rollback();
 						} catch (SQLException sqle) {
