@@ -21,8 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ecer.kafka.connect.oracle.errorHandler.*;
-
 import static com.ecer.kafka.connect.oracle.OracleConnectorSchema.SQL_REDO_FIELD;
+import static com.ecer.kafka.connect.oracle.OracleConnectorSchema.SCN_FIELD;
+
 //
 //https://github.com/confluentinc/kafka-connect-jdbc/blob/master/src/main/java/io/confluent/connect/jdbc/sink/JdbcSinkTask.java
 
@@ -85,11 +86,12 @@ public class OracleSinkTask extends SinkTask {
 
 				String topic = record.topic();
 				final Struct valueStruct = (Struct) record.value();
-				final boolean isDelete = isNull(valueStruct);
-				final Field field = record.valueSchema().field(SQL_REDO_FIELD);
-				Schema fieldSchema = field.schema();
+				// final boolean isDelete = isNull(valueStruct);
+				Schema valueSchema = record.valueSchema();
+				final Field field = valueSchema.field(SQL_REDO_FIELD);
+				// Schema fieldSchema = field.schema();
 				String sql = valueStruct.get(field).toString();
-				
+
 				if (log.isInfoEnabled()) {
 					log.info(String.format("(%s-%s-%s)...", topic, record.kafkaPartition(), record.kafkaOffset()));
 					log.info(sql);
@@ -102,7 +104,8 @@ public class OracleSinkTask extends SinkTask {
 					// java.sql.SQLSyntaxErrorException: ORA-00955: 名称已由现有对象使用
 					log.error("原始执行错误：" + e.toString());
 					log.error("参考信息：------------------------------");
-					log.error(String.format("KafKa: (%s-%s-%s)", topic, record.kafkaPartition(), record.kafkaOffset()));
+					log.error(String.format("KafKa: (%s-%s-%s) @SCN:%s", topic, record.kafkaPartition(),
+							record.kafkaOffset(), valueStruct.get(valueSchema.field(SCN_FIELD))));
 					log.error(sql);
 					log.error("------------------------------ 参考信息");
 

@@ -1,3 +1,11 @@
+#部署镜像构建
+docker build -t akaiot/kafka-connect-oracle:1.0.72 --build-arg NAME=LogminerSyncKafka --build-arg VERSION=1.0.72 --build-arg JAR_FILE=kafka-connect-oracle-1.0.72.jar .
+
+#镜像标签设置
+docker tag akaiot/kafka-connect-oracle:1.0.72 mes.com/tools/kafka-connect-oracle:1.0.72
+
+
+#docker-compose部署
 docker-compose up -d
 
 
@@ -46,3 +54,33 @@ docker run -d --name oraclesync -p 8083:8083 -v /opt/oracle/datasync/config:/hom
 
 
 curl -X POST http://192.168.223.167:8083/connectors/oracle-logminer-connector/tasks/0/restart
+
+
+#连接器API
+https://docs.confluent.io/platform/current/connect/references/restapi.html
+
+#收集器列表
+curl http://192.168.223.167:8083/connectors
+
+#重启收集器的第1个任务
+curl -X POST http://192.168.223.167:8083/connectors/oracle-logminer-connector/tasks/0/restart
+
+#添加重做收集器
+curl -H "Content-Type: application/json" -X POST -d '{"name":"oracle-logminer-redoscn","config":{"connector.class":"com.ecer.kafka.connect.oracle.OracleSourceConnector","tasks.max":"1","topic":"P3OLTP","db.name.alias":"P3OLTP","db.name":"P3OLTP","db.hostname":"192.168.230.15","db.port":"1521","db.user":"kf_dba","db.user.password":"kf_dba#1234","db.fetch.size":"1","table.whitelist":"INSITE.*","table.blacklist":"INSITE.NLOG","parse.dml.data":"true","reset.offset":"true","multitenant":"false","start.scn":""}}' "http://192.168.223.167:8083/connectors"
+
+#删除redo收集器
+curl -X DELETE http://192.168.223.167:8083/connectors/oracle-logminer-redoscn
+
+
+http://192.168.223.167:8083/connector-plugins
+[{"class":"com.ecer.kafka.connect.oracle.OracleSinkConnector","type":"sink","version":"1.0.72"},
+{"class":"com.ecer.kafka.connect.oracle.OracleSourceConnector","type":"source","version":"1.0.72"},
+{"class":"org.apache.kafka.connect.file.FileStreamSinkConnector","type":"sink","version":"2.6.0"},
+{"class":"org.apache.kafka.connect.file.FileStreamSourceConnector","type":"source","version":"2.6.0"},
+{"class":"org.apache.kafka.connect.mirror.MirrorCheckpointConnector","type":"source","version":"1"},
+{"class":"org.apache.kafka.connect.mirror.MirrorHeartbeatConnector","type":"source","version":"1"},
+{"class":"org.apache.kafka.connect.mirror.MirrorSourceConnector","type":"source","version":"1"}]
+
+
+#配置规则验证
+curl -H "Content-Type: application/json" -X PUT -d '{"name":"oracle-logminer-redoscn","connector.class":"com.ecer.kafka.connect.oracle.OracleSourceConnector","tasks.max":"1","topic":"P3OLTP","db.name.alias":"P3OLTP","db.name":"P3OLTP","db.hostname":"192.168.230.15","db.port":"1521","db.user":"kf_dba","db.user.password":"kf_dba#1234","db.fetch.size":"1","table.whitelist":"INSITE.*","table.blacklist":"INSITE.NLOG","parse.dml.data":"true","reset.offset":"true","multitenant":"false","start.scn":""}' http://192.168.223.167:8083/connector-plugins/com.ecer.kafka.connect.oracle.OracleSinkConnector/config/validate/
